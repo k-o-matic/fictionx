@@ -1,0 +1,60 @@
+{
+    "enemies": [
+        {
+            "x": 57,
+            "y": 8,
+            "variant": 0,
+            "enemy_bullet_variant": 2,
+            "enemy_bullet_aimed": true,
+            "enemy_flight_animation": 0
+        },
+        {
+            "x": 57,
+            "y": 28,
+            "variant": 0,
+            "enemy_bullet_variant": 2,
+            "enemy_bullet_aimed": true,
+            "enemy_flight_animation": 0
+        },
+        {
+            "x": 57,
+            "y": 48,
+            "variant": 0,
+            "enemy_bullet_variant": 2,
+            "enemy_bullet_aimed": true,
+            "enemy_flight_animation": 0
+        },
+        {
+            "x": 57,
+            "y": 68,
+            "variant": 0,
+            "enemy_bullet_variant": 2,
+            "enemy_bullet_aimed": true,
+            "enemy_flight_animation": 0
+        },
+        {
+            "x": 57,
+            "y": 88,
+            "variant": 0,
+            "enemy_bullet_variant": 2,
+            "enemy_bullet_aimed": true,
+            "enemy_flight_animation": 0
+        },
+        {
+            "x": 57,
+            "y": 108,
+            "variant": 0,
+            "enemy_bullet_variant": 2,
+            "enemy_bullet_aimed": true,
+            "enemy_flight_animation": 0
+        },
+        {
+            "x": 105,
+            "y": 58,
+            "variant": 1,
+            "enemy_bullet_variant": 1,
+            "enemy_bullet_aimed": false,
+            "enemy_flight_animation": 0
+        }
+    ]
+}
