@@ -1,4 +1,5 @@
 {
+    "vmap_width": 240,
     "enemies": [
         {
             "x": 57,

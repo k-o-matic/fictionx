@@ -25,7 +25,6 @@ PLAYER_Y = 0
 
 BULLET_WIDTH = 4
 BULLET_HEIGHT = 2
-#BULLET_SPEED = 4
 
 ENEMY_WIDTH = 16
 ENEMY_HEIGHT = 16
@@ -38,6 +37,7 @@ enemy_list = []
 bullet_list = []
 blast_list = []
 enemy_bullet_list = []
+
 
 def update_list(lst):
     for elem in lst:
@@ -87,13 +87,14 @@ class FPS:
 class Scrolltext:
 
     def __init__(self):
-        self.scrolltext = "This is my first prototype / work in progress space shooter game!!! It will take some time to be ready :-)"
+        self.scrolltext = "This is my first prototype / work in progress space shooter game!!! " \
+                          "It will take some time to be ready :-)"
         self.scrolltext_pixel_length = len(self.scrolltext)*4
         self.x = 160
         self.y = 88
         self.y_start = 88
         self.y_end = screen_hight - 24
-        self.y_acceleration = 1.2 # 36 / FPS_ACTUAL      # 1.2
+        self.y_acceleration = 1.2   # 36 / FPS_ACTUAL # default: 1.2
         self.y_speed = 1
         self.y_direction_down = True
         self.border_color = 6
@@ -114,8 +115,6 @@ class Scrolltext:
         divider = round(FPS_ACTUAL/30)
         if divider > 0:
             if pyxel.frame_count % divider == 0:
-
-
                 # change x position
                 # moving down
                 if self.y < self.y_end and self.y_direction_down:
@@ -156,7 +155,6 @@ class Scrolltext:
                                screen_width / self.stripe_sections - 1 + self.stripe_x),
                            self.y + line_y, 4)
             if self.stripe_x < (screen_width / self.stripe_sections):
-                #self.stripe_x += 1
                 self.stripe_x += 30 / FPS_ACTUAL
             else:
                 self.stripe_x = - screen_width / self.stripe_sections
@@ -188,7 +186,7 @@ class Background:
 
 
 class Lettering:
-    def __init__(self, y_start, word='K-O.MAZI3', animation=True ):
+    def __init__(self, y_start, word='K-O.MAZI3', animation=True):
         self.word = word
         self.letter_positions_x = []
         self.letter_positions_y = []
@@ -309,21 +307,21 @@ class Player:
         PLAYER_X = self.x
         PLAYER_Y = self.y
 
-
     def draw(self):
         # draw Spaceship
         if self.alive:
             pyxel.blt(self.x, self.y, 0, self.map_pos[self.map_nr], 0, self.w, self.h, 0)
+
 
 class ShipBlast:
     def __init__(self, x, y, model='player'):
         self.x = x
         self.y = y
         self.alive = True
-        pyxel.play(3,21)
+        pyxel.play(3, 21)
         self.animation_sprite_quantity = 11     # sprites in a row
         if model == 'player':
-            self.map_pos = [80-16, 0] #, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240)
+            self.map_pos = [80-16, 0]  # 96, 112, 128, 144, 160, 176, 192, 208, 224, 240
         if model == 'enemy':
             self.map_pos = [80-16, 80]
 
@@ -348,7 +346,7 @@ class Bullet:
         self.bullet_speed = bullet_speed * 30 / FPS_ACTUAL
 
         bullet_list.append(self)
-        pyxel.play(3,20)
+        pyxel.play(3, 20)
 
     def update(self):
         self.x += self.bullet_speed
@@ -361,7 +359,7 @@ class Bullet:
 
 class Enemy:
 
-    animation_list = list(range(0,6))
+    animation_list = list(range(0, 6))
 
     def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0):
         self.x = x
@@ -375,18 +373,14 @@ class Enemy:
         self.alive = True
         self.offset = int(random.random() * 60)
         self.out_of_ammu = False
-
-        #'animation as object'
+        # 'animation as object'
         self.flight_animation = EnemyFlightAnimation(self, animation, bullet_variant, bullet_aimed)
 
 
         enemy_list.append(self)
 
-        #TEST
         image_map_y_pos_list = [80, 96, 112, 128, 144, 160, 176]
-        #image_y_pos_random = random.randrange(0, len(image_map_y_pos_list), 1)
         self.image_map_y_pos = image_map_y_pos_list[self.variant]
-
 
     def update(self, animation=0, shooting=0):
         # No up and down
@@ -400,10 +394,7 @@ class Enemy:
             else:
                 self.dir = -1
 
-
         self.flight_animation.update()
-
-
 
         # cycle through sprite list
         divider = round(FPS_ACTUAL/7.5)
@@ -418,21 +409,24 @@ class Enemy:
     def draw(self):
         pyxel.blt(self.x, self.y, 0, self.map_pos[0], self.image_map_y_pos, self.w, self.h, 0)
 
+
 class EnemyFlightAnimation:
 
     variant_names = ['flying straight', 'flying up and down', 'enemy with extra speed',
-                     'with extra speed toward player', 'flying and shooting straight', 'flying in circle']
+                     'with extra speed toward player', 'flying and shooting straight', 'flying in circle',
+                     'swinging']
 
     def __init__(self, enemy_obj, variant=0, bullet_variant=0, bullet_aimed=0):
         self.enemy = enemy_obj
         self.variant = variant
-        #print('Initiate animation: {}'.format(self.variant_names[self.variant]))
         # for flying circles
         self.circle_step_sum = 0
         self.radius = 50
         self.flying_circle_started = False
         self.bullet_variant = bullet_variant
         self.bullet_aimed = bullet_aimed
+        self.swing_span = 6
+        self.swing_y_start = self.enemy.y
 
     def update(self):
 
@@ -490,6 +484,19 @@ class EnemyFlightAnimation:
                 else:
                     self.enemy.x -= ENEMY_SPEED
 
+        if self.variant == 6:     # swinging
+            self.enemy.x -= ENEMY_SPEED
+            span = pyxel.frame_count % self.swing_span
+
+            if self.enemy.x < screen_width:
+                if self.enemy.y < self.swing_y_start + self.swing_span and self.enemy.dir == 1:
+                    self.enemy.y += ENEMY_SPEED/4
+                elif self.enemy.y > self.swing_y_start - self.swing_span and self.enemy.dir == -1:
+                    self.enemy.y -= ENEMY_SPEED/4
+                else:
+                    self.enemy.dir *= -1
+
+
         # shooting
         if self.bullet_variant > 0:
             if self.enemy.x < (screen_width - screen_width / 6):
@@ -510,7 +517,7 @@ class EnemyBullet:
         self.alive = True
         self.bullet_speed = bullet_speed * 30 / FPS_ACTUAL
         self.variant = variant
-        self.aimed = False
+        self.aimed = aimed
         self.y_factor = 0     # moving vertically
         self.color_range = [8, 8, 2, 8, 8, 7]
 
@@ -592,7 +599,7 @@ class Formation:
                     Enemy(x + (j * (ENEMY_WIDTH + 0)), y + (i * ENEMY_HEIGHT), anim)
 
 class Formation2:
-    formation_files = ['formation_1643569683.json', 'formation_0001.json', 'formation_1643570322.json']
+    formation_files = ['formation_1644008576.json', 'formation_1644002913.json', 'formation_1643569683.json', 'formation_0001.json', 'formation_1643570322.json']
     def __init__(self, no, x, y):
         self.x = x
         self.y = y
@@ -617,13 +624,9 @@ class Formation2:
                   y + formation['y'],
                   formation['enemy_flight_animation'],
                   formation['variant'],
-                  formation['enemy_bullet_variant']
+                  formation['enemy_bullet_variant'],
+                  formation['enemy_bullet_aimed']
                   )
-
-            # for j, column in enumerate(row):
-            #     if int(row[j]) > 0:
-            #         anim = int(row[j]) - 1
-            #         Enemy(x + (j * (ENEMY_WIDTH + 0)), y + (i * ENEMY_HEIGHT), anim)
 
 class App:
     def __init__(self):

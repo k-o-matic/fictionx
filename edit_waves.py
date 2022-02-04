@@ -1,3 +1,5 @@
+import sys
+
 import pyxel
 import uuid
 import json
@@ -8,7 +10,7 @@ from fiction_game import EnemyFlightAnimation
 
 #todo:
 # R button = reset
-# Import JSON file in editor
+# Import JSON file in editor => Bullet-Information
 
 
 VERSION = 'v 0.0.1'
@@ -92,9 +94,8 @@ def editor_window_update():
             else:
                 x = pyxel.mouse_x
                 y = pyxel.mouse_y
-            SELECTED_DESTINATION = VMapEnemy(Enemy(SELECTED_SOURCE, x, y, 0, False))
-            # VMapEnemy(SELECTED_DESTINATION)
-            # print('SELECTED_DESTINATION:', SELECTED_DESTINATION)
+            SELECTED_DESTINATION = VMapEnemy(Enemy(x, y, 0, SELECTED_SOURCE, 0, 0, False))
+            # def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0):
     else:
         mx = ''
         my = ''
@@ -176,7 +177,7 @@ def export_json():
                            'enemy_flight_animation': formation_enemy.animation.variant}
         formation_enemies_list.append(vmap_enemy_dict)
     formation_enemies_list.sort(key=lambda d: d['x'])  # Sort list with dicts by 'x' value
-    formation_export = {'enemies': formation_enemies_list}
+    formation_export = {'vmap_width': VIRTUAL_MAP_WIDTH, 'enemies': formation_enemies_list}
 
     # Serializing json and write a file
     json_object = json.dumps(formation_export, indent=4)
@@ -186,6 +187,23 @@ def export_json():
         outfile.write(json_object)
     cwd = os.getcwd()
     print('Saved {} to {}'.format(outfile.name, cwd))
+
+def import_json_file(file):
+    global VIRTUAL_MAP_WIDTH
+    print('File to import:', file)
+    with open(file) as json_file:
+        json_data = json.load(json_file)
+    VIRTUAL_MAP_WIDTH = json_data['vmap_width']
+    for enemy in json_data['enemies']:
+        VMapEnemy(
+            Enemy(enemy['x'] - VIRTUAL_MAP_X_OFFSET,
+                  enemy['y'] + 9,
+                  enemy['enemy_flight_animation'],
+                  enemy['variant'],
+                  enemy['enemy_bullet_variant'],
+                  enemy['enemy_bullet_aimed'],
+                  False
+                  ))
 
 class Button:
     def __init__(self, x: int, y: int, text: str, h=9):
@@ -211,10 +229,15 @@ class Button:
         pyxel.text(self.x + 2, self.y + 2, self.text, 5)
         pyxel.rectb(self.x, self.y, self.w, self.h, 5)
 
+###########################
+# Game and vMapObjects
+###########################
+
 
 class Enemy:
 
-    def __init__(self, variant: int, x, y, animation=0, source=False):
+    def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0, source=False):
+        # def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0):
         self.x = x
         self.v_map_x = x + VIRTUAL_MAP_X_OFFSET
         self.y = y
@@ -235,6 +258,8 @@ class Enemy:
         self.flying_circle_started = False
 
         self.image_map_y_pos = image_map_y_pos_list[variant]
+        self.bullet_variant = bullet_variant
+        self.bullet_aimed = bullet_aimed
 
         enemy_list.append(self)
 
@@ -289,9 +314,11 @@ class VMapEnemy:
         self.v_map_x = obj.x + VIRTUAL_MAP_X_OFFSET
         self.v_map_y = obj.y - 9
         # self.variant = variant
+        self.variant = obj.variant
         self.uuid = str(uuid.uuid4())
-        self.bullet = EnemyBullet(40, 166, 8, 5, 0)
-        self.animation = EnemyFlightAnimation(self.vmap_enemy)
+        self.bullet = EnemyBullet(40, 166, 8, 5, obj.bullet_variant, obj.bullet_aimed)
+        self.animation = EnemyFlightAnimation(self.vmap_enemy, 0, obj.bullet_variant, obj.bullet_aimed)
+        self.animation.variant = obj.animation
         ####
         self.alive = True
         VMAP_ENEMIES.append(self)
@@ -353,10 +380,17 @@ class App:
 
         # generate enemy source instances
         for i, j in enumerate(image_map_y_pos_list):
-            Enemy(i, 260, 2 + i * 24, 0, True)
+            Enemy(260, 2 + i * 24, 0, i, 0, 0, True)
         ### Editor
         Button(3, SCREEN_HEIGHT - 12, 'Export JSON')
 
+        # Import json if it was given as start argument, e.g.: python edit_waves.py formation0001.json
+        if (len(sys.argv)) == 2:
+            filename = sys.argv[1]
+            if filename.endswith('.json'):
+                import_json_file(filename)
+
+        # Run pyxel :-)
         pyxel.run(self.update, self.draw)
 
     def update(self):
@@ -396,7 +430,9 @@ class App:
                              'mouse right click: delete ship\n'
                              'Arrow keys: move ship in editor window\n'
                              'click blue text: change variants\n'
-                             'SHIFT: show an use raster'
+                             'SHIFT: show an use raster\n\n'
+                             'Import existing formation file: python edit_waves.py {your_formation_file.json}'
+
                        , 7)
         else:
             # EditorWindow.draw()

@@ -1,0 +1,85 @@
+{
+    "vmap_width": 240,
+    "enemies": [
+        {
+            "x": 17,
+            "y": 48,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 21,
+            "y": 93,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 41,
+            "y": 48,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 47,
+            "y": 13,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 65,
+            "y": 48,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 89,
+            "y": 48,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 113,
+            "y": 48,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 156,
+            "y": 92,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 177,
+            "y": 72,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        },
+        {
+            "x": 207,
+            "y": 40,
+            "variant": 1,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 6
+        }
+    ]
+}
