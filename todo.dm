@@ -4,7 +4,6 @@
 
 Editor
 ------
-* Load existing JSON file via parameter in editor
 * R button = reset editor
 
 Game

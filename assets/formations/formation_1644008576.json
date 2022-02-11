@@ -5,7 +5,7 @@
             "x": 17,
             "y": 48,
             "variant": 1,
-            "enemy_bullet_variant": 0,
+            "enemy_bullet_variant": 1,
             "enemy_bullet_aimed": 0,
             "enemy_flight_animation": 6
         },
@@ -76,10 +76,10 @@
         {
             "x": 207,
             "y": 40,
-            "variant": 1,
-            "enemy_bullet_variant": 0,
+            "variant": 6,
+            "enemy_bullet_variant": 3,
             "enemy_bullet_aimed": 0,
-            "enemy_flight_animation": 6
+            "enemy_flight_animation": 7
         }
     ]
 }

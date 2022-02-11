@@ -55,6 +55,7 @@ def cleanup_list(lst):
         elem = lst[i]
         if not elem.alive:
             lst.pop(i)
+            del elem
         else:
             i += 1
 
@@ -361,7 +362,7 @@ class Enemy:
 
     animation_list = list(range(0, 6))
 
-    def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0):
+    def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=False):
         self.x = x
         self.y = y
         self.w = ENEMY_WIDTH
@@ -375,27 +376,13 @@ class Enemy:
         self.out_of_ammu = False
         # 'animation as object'
         self.flight_animation = EnemyFlightAnimation(self, animation, bullet_variant, bullet_aimed)
-
-
-        enemy_list.append(self)
-
         image_map_y_pos_list = [80, 96, 112, 128, 144, 160, 176]
         self.image_map_y_pos = image_map_y_pos_list[self.variant]
 
-    def update(self, animation=0, shooting=0):
-        # No up and down
-        if 1 == 2:
-            if (pyxel.frame_count + self.offset) % 60 < 30:
-                if self.y < (screen_hight - ENEMY_HEIGHT):
-                    self.y += ENEMY_SPEED
-                    self.dir = 1
-            elif self.y > 8:
-                self.y -= ENEMY_SPEED
-            else:
-                self.dir = -1
+        enemy_list.append(self)
 
+    def update(self):
         self.flight_animation.update()
-
         # cycle through sprite list
         divider = round(FPS_ACTUAL/7.5)
         if divider > 0:
@@ -414,17 +401,19 @@ class EnemyFlightAnimation:
 
     variant_names = ['flying straight', 'flying up and down', 'enemy with extra speed',
                      'with extra speed toward player', 'flying and shooting straight', 'flying in circle',
-                     'swinging']
+                     'swinging', 'stop and shoot']
 
-    def __init__(self, enemy_obj, variant=0, bullet_variant=0, bullet_aimed=0):
+    def __init__(self, enemy_obj, variant=0, bullet_variant=0, bullet_aimed=False):
         self.enemy = enemy_obj
         self.variant = variant
         # for flying circles
         self.circle_step_sum = 0
+        self.radian_offset = 0
         self.radius = 50
         self.flying_circle_started = False
         self.bullet_variant = bullet_variant
         self.bullet_aimed = bullet_aimed
+        self.wait_for_next_shot = 10 * (FPS_ACTUAL/30)
         self.swing_span = 6
         self.swing_y_start = self.enemy.y
 
@@ -462,7 +451,7 @@ class EnemyFlightAnimation:
             self.enemy.x -= ENEMY_SPEED
             if self.enemy.x < (screen_width - screen_width / 6):
                 if self.enemy.x < (screen_width - screen_width / 6) and not self.enemy.out_of_ammu:
-                    EnemyBullet(self.enemy.x - BULLET_WIDTH, self.enemy.y + ENEMY_HEIGHT/2 - 1)
+                    EnemyBullet(int(self.enemy.x - BULLET_WIDTH), self.enemy.y + ENEMY_HEIGHT/2 - 1)
                     self.enemy.out_of_ammu = True
 
         if self.variant == 5:     # flying in circle
@@ -473,20 +462,17 @@ class EnemyFlightAnimation:
             else:
                 self.flying_circle_started = True
                 offset = math.pi * 1.5
-                #step_size = 2 / self.radius
-                step_size = 0.1 * 30 / FPS_ACTUAL
+                radian = 0.1 * 30 / FPS_ACTUAL
                 if self.circle_step_sum < 2 * math.pi:
                     self.enemy.x = self.enemy.mx - self.radius * math.cos(self.circle_step_sum+offset)
                     self.enemy.y = self.enemy.my + self.radius * math.sin(self.circle_step_sum+offset)
                     self.enemy.mx -= 0.3
-                    #radius -= step_size*4
-                    self.circle_step_sum += step_size
+                    self.circle_step_sum += radian
                 else:
                     self.enemy.x -= ENEMY_SPEED
 
         if self.variant == 6:     # swinging
             self.enemy.x -= ENEMY_SPEED
-            span = pyxel.frame_count % self.swing_span
 
             if self.enemy.x < screen_width:
                 if self.enemy.y < self.swing_y_start + self.swing_span and self.enemy.dir == 1:
@@ -496,23 +482,62 @@ class EnemyFlightAnimation:
                 else:
                     self.enemy.dir *= -1
 
+        if self.variant == 7:     # stop and shoot
+            if self.enemy.x > screen_width * 0.8:
+                self.enemy.x -= ENEMY_SPEED
+            else:
+                if not self.enemy.out_of_ammu and self.wait_for_next_shot <= 0:
+                    radian = math.pi / 6
+                    radian_sum = 0
+                    while radian_sum < 2 * math.pi:
+                        EnemyBullet(int(self.enemy.x + ENEMY_WIDTH/2),
+                                    self.enemy.y + ENEMY_HEIGHT/2 - 1,
+                                    8,
+                                    5,
+                                    self.bullet_variant,
+                                    radian_sum=radian_sum,
+                                    radian_offset=self.radian_offset)
+                        radian_sum += radian
+                    self.radian_offset += 0.1
+                    self.wait_for_next_shot = 10 * (FPS_ACTUAL/30)
+                    if self.radian_offset > 1.6:
+                        self.enemy.out_of_ammu = True
+            self.wait_for_next_shot -= 1
 
+        #############
         # shooting
-        if self.bullet_variant > 0:
+        #############
+
+        if self.bullet_variant in (1, 2):
             if self.enemy.x < (screen_width - screen_width / 6):
                 if self.enemy.x < (screen_width - screen_width / 6) and not self.enemy.out_of_ammu:
-                    EnemyBullet(self.enemy.x - BULLET_WIDTH, self.enemy.y + ENEMY_HEIGHT/2 - 1, 8, 5, self.bullet_variant, self.bullet_aimed)
+                    EnemyBullet(int(self.enemy.x),
+                                self.enemy.y + ENEMY_HEIGHT/2 - 1,
+                                8,
+                                5,
+                                self.bullet_variant,
+                                self.bullet_aimed)
                     self.enemy.out_of_ammu = True
+
 
 class EnemyBullet:
 
-    variant_names = ['None', 'straight laser', 'circle laser']
+    variant_names = ['None', 'straight laser', 'circle laser', 'spinning lasers']
 
-    def __init__(self, x: int, y: int, col=8, bullet_speed=5, variant=1, aimed=False):
-        self.x = x
+    def __init__(self, x: int, y: int, col=8, bullet_speed=5, variant=1, aimed=False, radian_sum=0, radian_offset=0):
+        bullets_dimension = {
+            0: (0, 0),  # nothing
+            1: (4, 2),  # straight laser
+            2: (4, 4),  # circle laser
+            3: (1, 1)   # spinning laser pixel
+        }
+
+        self.w, self.h = bullets_dimension.get(variant)
+
+        self.x = x - self.w
         self.y = y
-        self.w = BULLET_WIDTH
-        self.h = BULLET_HEIGHT
+        self.origin_x = self.x
+        self.origin_y = self.y
         self.color = col
         self.alive = True
         self.bullet_speed = bullet_speed * 30 / FPS_ACTUAL
@@ -520,9 +545,14 @@ class EnemyBullet:
         self.aimed = aimed
         self.y_factor = 0     # moving vertically
         self.color_range = [8, 8, 2, 8, 8, 7]
+        self.radius = 1
+        self.radian_sum = radian_sum
+        self.radian_offset = radian_offset
+        self.radian_offset = self.radian_offset
+        self.spinning_coordinates = []
 
         enemy_bullet_list.append(self)
-        pyxel.play(3,20)
+        pyxel.play(3, 20)
 
     def update(self):
         if self.variant == 1:        # straight laser
@@ -532,94 +562,45 @@ class EnemyBullet:
 
         if self.variant == 2:       # circle laser
             self.x -= self.bullet_speed
-            #if self.x > PLAYER_X:
-            if 1 == 1:
-                if self.aimed is False:
-                    self.y_factor = Vector2.y_target_factor([self.x, self.y], [PLAYER_X, PLAYER_Y])
-                    self.aimed = True
-                self.y -= self.y_factor * self.bullet_speed
-                self.color_range.append(self.color_range[0])
-                self.color_range.pop(0)
+            if self.aimed is False:
+                self.y_factor = Vector2.y_target_factor([self.x, self.y], [PLAYER_X, PLAYER_Y])
+                self.aimed = True
+            self.y -= self.y_factor * self.bullet_speed
+            self.color_range.append(self.color_range[0])
+            self.color_range.pop(0)
+
+        if self.variant == 3:       # spinning laser
+            self.radius += 1  # * (30 / FPS_ACTUAL)    # FPS
+            self.x = int(self.origin_x - self.radius * math.cos(self.radian_sum+self.radian_offset))
+            self.y = int(self.origin_y + self.radius * math.sin(self.radian_sum+self.radian_offset))
 
     def draw(self):
-        if self.variant == 1:
+        if self.variant == 1:   # straight laser
             pyxel.rect(self.x, self.y, self.w, self.h, self.color)
 
-        if self.variant == 2:   #Circle
+        if self.variant == 2:   # Circle laser
             pyxel.circ(self.x, self.y, 2, self.color_range[0])
 
+        if self.variant == 3:   # spinning laser
+            pyxel.pset(self.x, self.y, 8)
 
-class Formation:
-    def __init__(self, no, x, y):
-        # formation: 0 = nothing; 1 = ship; 2 = ship with y-movement
-        self.formation = [
-                ['102000020000000010000010000000000'],
-                ['00606060606000000000000606060606'],
-                ['00005000000000000011112'],
-                ['50000000000003',
-                 '00500000',
-                 '50000000',
-                 '00500020',
-                 '50000000',
-                 '00500200',
-                 '50000000',
-                 '00500002',
-                 '50000000000004',
-                 '00500000',
-                 '50000000'],
-                ['00000000004',
-                 '50000000001',
-                 '30000000000',
-                 '00000000001',
-                 '00000000004'],
-                ['00500000100',
-                 '00050001000',
-                 '00111111100',
-                 '01101110110',
-                 '41111111111',
-                 '50111111101',
-                 '10100000101',
-                 '00011011000'],
-                ['30101010101',
-                 '00000000000',
-                 '03010101010'],
-                ['00100100100',
-                 '05001001001',
-                 '20020020010',
-                 '05001001001',
-                 '00100100100']
-            ]
-        self.x = x
-        self.y = y
-
-        for i, row in enumerate(self.formation[no]):
-            for j, column in enumerate(row):
-                if int(row[j]) > 0:
-                    anim = int(row[j]) - 1
-                    Enemy(x + (j * (ENEMY_WIDTH + 0)), y + (i * ENEMY_HEIGHT), anim)
 
 class Formation2:
-    formation_files = ['formation_1644008576.json', 'formation_1644002913.json', 'formation_1643569683.json', 'formation_0001.json', 'formation_1643570322.json']
+    formation_files = ['formation_1644008576.json', 'formation_1644002913.json', 'formation_1643569683.json',
+                       'formation_0001.json', 'formation_1643570322.json', 'formation_1644621139.json']
+
     def __init__(self, no, x, y):
         self.x = x
         self.y = y
         self.formation_list = []
-        #for file in self.formation_files:
-        #    temp_list = []
         if 1 == 1:
-            #temp_list = []
             file = Formation2.formation_files[no]
-            with open(file) as json_file:
+            with open('./assets/formations/'+file) as json_file:
                 json_data = json.load(json_file)
                 for e in json_data['enemies']:
-                    #temp_list.append(e)
                     self.formation_list.append(e)
-                #self.formations_list.append(temp_list)
-
-        # [{'x': 81, 'y': 97, 'variant': 0, 'enemy_bullet_variant': 1, 'enemy_bullet_aimed': True, 'enemy_flight_animation': 0}]
 
         for i, formation in enumerate(self.formation_list):
-            #for element_dict in formation:
             Enemy(x + formation['x'],
                   y + formation['y'],
                   formation['enemy_flight_animation'],
@@ -628,17 +609,20 @@ class Formation2:
                   formation['enemy_bullet_aimed']
                   )
 
+
 class App:
     def __init__(self):
         pyxel.init(screen_width, screen_hight, title="Starship1", fps=FPS_LIMIT, capture_sec=30)
         self.high_score = 0
+        self.score = 0
+        self.scene = SCENE_TITLE
+        self.fps = FPS()    # fps calculation initialisation
         self.reset()
         pyxel.run(self.update, self.draw)
 
     def reset(self):
         self.score = 0
         self.scene = SCENE_TITLE
-        # fps calculation initialisation
         self.fps = FPS()
         pyxel.load("assets/test.pyxres")
         if self.scene == SCENE_TITLE:
@@ -674,16 +658,12 @@ class App:
 
     def init_scene_play(self):
         self.scene = SCENE_PLAY
-        #self.player.alive = True
-        #update_list(bullet_list)
         enemy_list.clear()
         blast_list.clear()
         bullet_list.clear()
         enemy_bullet_list.clear()
         self.score = 0
-
         self.player = Player(int(PLAYER_WIDTH/4), int(screen_hight/2-8))
-
         self.f = 0 # reset formation no to start formation #todo
 
         self.shield_bar_value = 10
@@ -698,16 +678,12 @@ class App:
         cleanup_list(blast_list)
         cleanup_list(enemy_bullet_list)
 
-
     def update(self):
-
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
         if pyxel.btnp(pyxel.KEY_R):
             self.reset()
-
         self.fps.update_fps()
-
         if self.scene == SCENE_TITLE:
             self.update_title_scene()
         elif self.scene == SCENE_PLAY:
@@ -734,21 +710,16 @@ class App:
             self.player = Player(int(PLAYER_WIDTH/4), int(screen_hight/2-8))
             self.init_scene_play()
 
-
     def update_play_scene(self):
         self.background.update()
         self.player.update(self.scene)
-
         if len(enemy_list) < 1:
             f_new = Formation2(self.f, screen_width, 0)
-            #self.f_max = len(Formation2.formation_files)
-            #print('f_max:', self.f_max)
-            if self.f < self.f_max -1:
+            if self.f < self.f_max - 1:
                 self.f += 1
             else:
                 self.f = 0
-
-        # Check bullet with enermy collision
+        # Check bullet with enemy collision
         for e in enemy_list:
             for b in bullet_list:
                 if (
@@ -794,7 +765,6 @@ class App:
         elif self.shield_bar_value <= 3:
             self.shield_bar_color = 8
 
-
         update_list(bullet_list)
         update_list(enemy_list)
         update_list(blast_list)
@@ -804,7 +774,7 @@ class App:
         cleanup_list(blast_list)
         cleanup_list(enemy_bullet_list)
 
-        if self.player.alive is False and len(blast_list) == 0:  # check blastlist should be eliminated
+        if self.player.alive is False and len(blast_list) == 0:  # check blast_list should be eliminated
             self.scene = SCENE_GAMEOVER
             if self.score > self.high_score:
                 self.high_score = self.score
@@ -822,13 +792,12 @@ class App:
         cleanup_list(blast_list)
         cleanup_list(enemy_bullet_list)
 
+        if pyxel.frame_count % 8 == 0:
+            print
+
     def draw(self):
         pyxel.cls(0)
         self.background.draw()  # stars
-
-        # Draw fps on screen
-        #fps_string = 'FPS ' + str(self.fps.get_fps())
-        #pyxel.text(10, 20, fps_string, 7)
 
         if self.scene == SCENE_TITLE:
             self.draw_title_scene()
@@ -855,12 +824,10 @@ class App:
 
     def draw_play_scene(self):
         pyxel.rect(0, 0, screen_width, 7, 1)
-
-        #pyxel.text(4, 1, 'SHIELD', 13)
         pyxel.blt(1, 0, 0, 32, 72, 8, 8, 0)
         pyxel.rectb(9, 1, 12, 5, 5)     # draw shield frame
         pyxel.rect(10, 2, self.shield_bar_value, 3, self.shield_bar_color)
-        pyxel.text(70, 1, 'Score: {}    Highscore:{}'.format(self.score, self.high_score), 13)
+        pyxel.text(70, 1, 'Score: {}    High-score: {}'.format(self.score, self.high_score), 13)
         draw_list(bullet_list)
         draw_list(enemy_bullet_list)
         draw_list(enemy_list)
@@ -871,6 +838,7 @@ class App:
         self.draw_play_scene()
         Lettering(screen_hight/2 - 16, 'GAME OVER', animation=False ).draw()
         self.letter.text(int((screen_width - 176) / 2), int(screen_hight/2 + 8), 2, '|2|PRESS SPACE TO RESTART')
+
 
 if __name__ == '__main__':
     App()
