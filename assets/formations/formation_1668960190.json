@@ -1,0 +1,22 @@
+{
+    "vmap_width": 240,
+    "enemies": [
+        {
+            "x": 144,
+            "y": 65,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0
+        },
+        {
+            "x": 197,
+            "y": 71,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0,
+            "powerup": 1
+        }
+    ]
+}

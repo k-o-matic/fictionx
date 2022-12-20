@@ -1,0 +1,67 @@
+{
+    "vmap_width": 400,
+    "enemies": [
+        {
+            "x": 73,
+            "y": 51,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0,
+            "powerup": 1
+        },
+        {
+            "x": 143,
+            "y": 107,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0,
+            "powerup": 2
+        },
+        {
+            "x": 146,
+            "y": 22,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0,
+            "powerup": 3
+        },
+        {
+            "x": 193,
+            "y": 55,
+            "variant": 0,
+            "enemy_bullet_variant": 1,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 1,
+            "powerup": 4
+        },
+        {
+            "x": 276,
+            "y": 24,
+            "variant": 0,
+            "enemy_bullet_variant": 1,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0,
+            "powerup": 5
+        },
+        {
+            "x": 283,
+            "y": 107,
+            "variant": 0,
+            "enemy_bullet_variant": 1,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0
+        },
+        {
+            "x": 373,
+            "y": 65,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 1,
+			"powerup": 1
+        }
+    ]
+}

@@ -7,6 +7,7 @@ import time
 import os
 from fiction_game import EnemyBullet
 from fiction_game import EnemyFlightAnimation
+from fiction_game import PowerUp
 
 #todo:
 # R button = reset
@@ -94,13 +95,15 @@ def editor_window_update():
             else:
                 x = pyxel.mouse_x
                 y = pyxel.mouse_y
-            SELECTED_DESTINATION = VMapEnemy(Enemy(x, y, 0, SELECTED_SOURCE, 0, 0, False))
-            # def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0):
+            SELECTED_DESTINATION = VMapEnemy(Enemy(x, y, 0, SELECTED_SOURCE, 0, 0, 0, 0, False))
+            # __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=False, drop_powerup=0):
     else:
         mx = ''
         my = ''
 
     # Enemy Parameters
+    ###################
+    # Shooting
     if 2 <= pyxel.mouse_x <= 106 and 171 <= pyxel.mouse_y <= 178:  # 2,164
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             if SELECTED_DESTINATION.bullet.variant < (len(EnemyBullet.variant_names) - 1):
@@ -117,7 +120,21 @@ def editor_window_update():
                 SELECTED_DESTINATION.animation.variant += 1
             else:
                 SELECTED_DESTINATION.animation.variant = 0
+    # PowerUp
+    if 122 <= pyxel.mouse_x <= 226 and 171 <= pyxel.mouse_y <= 178:  # 2,164
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            if SELECTED_DESTINATION.powerup < (len(PowerUp.variant_names) - 1):
+                SELECTED_DESTINATION.powerup += 1
+            else:
+                SELECTED_DESTINATION.powerup = 0
 
+    # Shield max hits
+    if 122 <= pyxel.mouse_x <= 226 and 179 <= pyxel.mouse_y <= 186:
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            if SELECTED_DESTINATION.shield_max_hits <= 14:
+                SELECTED_DESTINATION.shield_max_hits += 2
+            else:
+                SELECTED_DESTINATION.shield_max_hits = 0
     return mx, my
 
 
@@ -174,7 +191,10 @@ def export_json():
                            'variant': formation_enemy.vmap_enemy.variant,
                            'enemy_bullet_variant': formation_enemy.bullet.variant,
                            'enemy_bullet_aimed': formation_enemy.bullet.aimed,
-                           'enemy_flight_animation': formation_enemy.animation.variant}
+                           'enemy_flight_animation': formation_enemy.animation.variant,
+                           'powerup': formation_enemy.powerup,
+                           'shield_max_hits': formation_enemy.shield_max_hits
+                           }
         formation_enemies_list.append(vmap_enemy_dict)
     formation_enemies_list.sort(key=lambda d: d['x'])  # Sort list with dicts by 'x' value
     formation_export = {'vmap_width': VIRTUAL_MAP_WIDTH, 'enemies': formation_enemies_list}
@@ -202,6 +222,8 @@ def import_json_file(file):
                   enemy['variant'],
                   enemy['enemy_bullet_variant'],
                   enemy['enemy_bullet_aimed'],
+                  enemy['powerup'],
+                  enemy['shield_max_hits'],
                   False
                   ))
 
@@ -236,12 +258,13 @@ class Button:
 
 class Enemy:
 
-    def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0, source=False):
-        # def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0):
+    def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=0, powerup=0, shield_max_hits=0, source=False):
+        # def __init__(self, x, y, animation=0, variant=0, bullet_variant=0, bullet_aimed=False, powerup=0):
         self.x = x
         self.v_map_x = x + VIRTUAL_MAP_X_OFFSET
         self.y = y
         self.variant = variant
+        self.powerup = powerup
         self.source = source
         self.image_map_x_pos = [0, 16, 32, 48]
 
@@ -260,6 +283,9 @@ class Enemy:
         self.image_map_y_pos = image_map_y_pos_list[variant]
         self.bullet_variant = bullet_variant
         self.bullet_aimed = bullet_aimed
+
+        #### NEU
+        self.shield_max_hits = shield_max_hits
 
         enemy_list.append(self)
 
@@ -319,9 +345,14 @@ class VMapEnemy:
         self.bullet = EnemyBullet(40, 166, 8, 5, obj.bullet_variant, obj.bullet_aimed)
         self.animation = EnemyFlightAnimation(self.vmap_enemy, 0, obj.bullet_variant, obj.bullet_aimed)
         self.animation.variant = obj.animation
+        self.powerup = obj.powerup
+
+        self.shield_max_hits = obj.shield_max_hits
+
         ####
         self.alive = True
         VMAP_ENEMIES.append(self)
+
 
     def update(self):
 
@@ -368,6 +399,16 @@ class VMapEnemy:
             animation_variant_name = EnemyFlightAnimation.variant_names[self.animation.variant]
             pyxel.text(2, 185, "Animation: {}".format(animation_variant_name), 5)
 
+            # powerup
+            powerup_name = PowerUp.variant_names[self.powerup]
+            pyxel.text(122, 171, "Drop PowerUp : {}".format(powerup_name), 5)
+
+            # powerup
+            powerup_name = PowerUp.variant_names[self.powerup]
+
+            pyxel.text(122, 178, "Shield : {}".format(self.shield_max_hits), 5)
+
+
 
 class App:
     mx = ''
@@ -380,7 +421,7 @@ class App:
 
         # generate enemy source instances
         for i, j in enumerate(image_map_y_pos_list):
-            Enemy(260, 2 + i * 24, 0, i, 0, 0, True)
+            Enemy(260, 2 + i * 24, 0, i, 0, 0, 0, True)
         ### Editor
         Button(3, SCREEN_HEIGHT - 12, 'Export JSON')
 

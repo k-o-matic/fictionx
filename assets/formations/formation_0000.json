@@ -1,0 +1,35 @@
+{
+    "vmap_width": 240,
+    "enemies": [
+        {
+            "x": 71,
+            "y": 91,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0,
+            "powerup": 0,
+            "shield_max_hits": 0
+        },
+        {
+            "x": 157,
+            "y": 52,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0,
+            "powerup": 1,
+            "shield_max_hits": 2
+        },
+        {
+            "x": 224,
+            "y": 102,
+            "variant": 0,
+            "enemy_bullet_variant": 0,
+            "enemy_bullet_aimed": 0,
+            "enemy_flight_animation": 0,
+            "powerup": 0,
+            "shield_max_hits": 4
+        }
+    ]
+}
